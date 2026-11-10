@@ -1,0 +1,85 @@
+name: "Set up CAS CLI"
+description: "Provisions cached uv and installs CAS CLI in an isolated tool environment without requiring private repository credentials"
+
+inputs:
+  version:
+    description: "Release tag, branch, or commit to install (default: 'main')"
+    required: false
+    default: "main"
+  source:
+    description: "Installation source: 'auto', 'wheel', 'git', or 'local'"
+    required: false
+    default: "auto"
+  cache:
+    description: "Enable uv tool and binary caching"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: ${{ inputs.cache == 'true' }}
+
+    - name: Install and verify CAS CLI
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SOURCE="${{ inputs.source }}"
+        VERSION="${{ inputs.version }}"
+        ACTION_PATH="${{ github.action_path }}"
+        ACTION_REPO_DIR=""
+        if [ -n "$ACTION_PATH" ] && [ -d "$ACTION_PATH/../../.." ]; then
+          ACTION_REPO_DIR="$(cd "$ACTION_PATH/../../.." && pwd)"
+        fi
+
+        if [ "$SOURCE" = "auto" ]; then
+          if [ -n "$ACTION_PATH" ] && compgen -G "$ACTION_PATH/dist/cas_runner-*.whl" > /dev/null; then
+            SOURCE="bundled_wheel"
+          elif [ -n "$ACTION_REPO_DIR" ] && [ -f "$ACTION_REPO_DIR/pyproject.toml" ] && grep -qE 'name[[:space:]]*=[[:space:]]*["\x27]cas_runner["\x27]' "$ACTION_REPO_DIR/pyproject.toml" 2>/dev/null; then
+            SOURCE="action_repo"
+          elif [ -f "pyproject.toml" ] && grep -qE 'name[[:space:]]*=[[:space:]]*["\x27]cas_runner["\x27]' pyproject.toml 2>/dev/null; then
+            SOURCE="local"
+          else
+            SOURCE="wheel"
+          fi
+        fi
+
+        if [ "$SOURCE" = "bundled_wheel" ]; then
+          WHEEL_PATH="$(ls "$ACTION_PATH"/dist/cas_runner-*.whl | head -n 1)"
+          echo "[setup-cas] Installing cas from bundled distribution wheel ($WHEEL_PATH)..."
+          uv tool install --force "$WHEEL_PATH"
+        elif [ "$SOURCE" = "action_repo" ]; then
+          echo "[setup-cas] Installing cas from action repository checkout ($ACTION_REPO_DIR)..."
+          uv tool install --force "$ACTION_REPO_DIR"
+        elif [ "$SOURCE" = "local" ]; then
+          echo "[setup-cas] Installing cas from local workspace..."
+          uv tool install --force .
+        elif [ "$SOURCE" = "wheel" ]; then
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
+            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/latest/download/cas_runner-latest-py3-none-any.whl"
+          else
+            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/download/${VERSION}/cas_runner-latest-py3-none-any.whl"
+          fi
+          echo "[setup-cas] Installing cas from public release wheel ($WHEEL_URL)..."
+          if ! uv tool install --force "$WHEEL_URL"; then
+            echo "[setup-cas][WARN] Public wheel install failed; falling back to git source..."
+            uv tool install --force "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
+          fi
+        else
+          echo "[setup-cas] Installing cas from git (ref: ${VERSION})..."
+          uv tool install --force "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
+        fi
+
+        UV_TOOL_BIN_DIR="$(uv tool dir --bin 2>/dev/null || echo "$HOME/.local/bin")"
+        if [ -d "$UV_TOOL_BIN_DIR" ]; then
+          echo "$UV_TOOL_BIN_DIR" >> "$GITHUB_PATH"
+          export PATH="$UV_TOOL_BIN_DIR:$PATH"
+        fi
+
+        which cas
+        cas --help >/dev/null
+        echo "[setup-cas] CAS CLI ready on PATH."
