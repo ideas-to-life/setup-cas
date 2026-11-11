@@ -61,7 +61,7 @@ runs:
         elif [ "$SOURCE" = "wheel" ]; then
           if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
             LATEST_WHEEL="$(curl -fsSL https://raw.githubusercontent.com/ideas-to-life/setup-cas/main/LATEST_WHEEL 2>/dev/null || echo "")"
-            WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.0-py3-none-any.whl}"
+            WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.1-py3-none-any.whl}"
             WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/latest/download/${WHEEL_NAME}"
           else
             CLEAN_VER="${VERSION#v}"

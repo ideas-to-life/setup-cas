@@ -79,7 +79,7 @@ echo "[CAS][INFO] Installing/upgrading CAS CLI via uv tool install..."
 if [ -z "$WHEEL_URL" ]; then
   if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
     LATEST_WHEEL="$(curl -fsSL "https://raw.githubusercontent.com/${DIST_REPO}/main/LATEST_WHEEL" 2>/dev/null || echo "")"
-    WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.0-py3-none-any.whl}"
+    WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.1-py3-none-any.whl}"
     WHEEL_URL="https://github.com/${DIST_REPO}/releases/latest/download/${WHEEL_NAME}"
   else
     CLEAN_VER="${VERSION#v}"
