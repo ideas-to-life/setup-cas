@@ -78,14 +78,17 @@ fi
 echo "[CAS][INFO] Installing/upgrading CAS CLI via uv tool install..."
 if [ -z "$WHEEL_URL" ]; then
   if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
-    WHEEL_URL="https://github.com/${DIST_REPO}/releases/latest/download/cas_runner-latest-py3-none-any.whl"
+    LATEST_WHEEL="$(curl -fsSL "https://raw.githubusercontent.com/${DIST_REPO}/main/LATEST_WHEEL" 2>/dev/null || echo "")"
+    WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.0-py3-none-any.whl}"
+    WHEEL_URL="https://github.com/${DIST_REPO}/releases/latest/download/${WHEEL_NAME}"
   else
-    WHEEL_URL="https://github.com/${DIST_REPO}/releases/download/${VERSION}/cas_runner-latest-py3-none-any.whl"
+    CLEAN_VER="${VERSION#v}"
+    WHEEL_URL="https://github.com/${DIST_REPO}/releases/download/${VERSION}/cas_runner-${CLEAN_VER}-py3-none-any.whl"
   fi
 fi
 
-if ! uv tool install --force "$WHEEL_URL" 2>/dev/null; then
-  echo "[CAS][INFO] Public release wheel unavailable or custom repository requested; installing from git source..."
+if ! uv tool install --force "$WHEEL_URL"; then
+  echo "[CAS][WARN] Direct wheel installation failed ($WHEEL_URL); attempting git source fallback..."
   INSTALL_SPEC="git+${REPO_URL}"
   if [ -n "$VERSION" ] && [ "$VERSION" != "main" ]; then
     INSTALL_SPEC="${INSTALL_SPEC}@${VERSION}"

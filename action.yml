@@ -60,9 +60,12 @@ runs:
           uv tool install --force .
         elif [ "$SOURCE" = "wheel" ]; then
           if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
-            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/latest/download/cas_runner-latest-py3-none-any.whl"
+            LATEST_WHEEL="$(curl -fsSL https://raw.githubusercontent.com/ideas-to-life/setup-cas/main/LATEST_WHEEL 2>/dev/null || echo "")"
+            WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.1.0-py3-none-any.whl}"
+            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/latest/download/${WHEEL_NAME}"
           else
-            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/download/${VERSION}/cas_runner-latest-py3-none-any.whl"
+            CLEAN_VER="${VERSION#v}"
+            WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/download/${VERSION}/cas_runner-${CLEAN_VER}-py3-none-any.whl"
           fi
           echo "[setup-cas] Installing cas from public release wheel ($WHEEL_URL)..."
           if ! uv tool install --force "$WHEEL_URL"; then
