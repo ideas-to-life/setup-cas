@@ -49,7 +49,16 @@ runs:
         fi
 
         if [ "$SOURCE" = "bundled_wheel" ]; then
-          WHEEL_PATH="$(ls "$ACTION_PATH"/dist/cas_runner-*.whl | head -n 1)"
+          WHEEL_PATH=""
+          if [ -f "$ACTION_PATH/LATEST_WHEEL" ]; then
+            WHEEL_NAME="$(cat "$ACTION_PATH/LATEST_WHEEL" | tr -d '[:space:]')"
+            if [ -f "$ACTION_PATH/dist/$WHEEL_NAME" ]; then
+              WHEEL_PATH="$ACTION_PATH/dist/$WHEEL_NAME"
+            fi
+          fi
+          if [ -z "$WHEEL_PATH" ]; then
+            WHEEL_PATH="$(ls -v "$ACTION_PATH"/dist/cas_runner-*.whl 2>/dev/null | tail -n 1)"
+          fi
           echo "[setup-cas] Installing cas from bundled distribution wheel ($WHEEL_PATH)..."
           uv tool install --force "$WHEEL_PATH"
         elif [ "$SOURCE" = "action_repo" ]; then
