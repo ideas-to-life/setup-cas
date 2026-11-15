@@ -60,30 +60,30 @@ runs:
             WHEEL_PATH="$(ls -v "$ACTION_PATH"/dist/cas_runner-*.whl 2>/dev/null | tail -n 1)"
           fi
           echo "[setup-cas] Installing cas from bundled distribution wheel ($WHEEL_PATH)..."
-          uv tool install --force "$WHEEL_PATH"
+          uv tool install --force --reinstall --no-cache "$WHEEL_PATH"
         elif [ "$SOURCE" = "action_repo" ]; then
           echo "[setup-cas] Installing cas from action repository checkout ($ACTION_REPO_DIR)..."
-          uv tool install --force "$ACTION_REPO_DIR"
+          uv tool install --force --reinstall --no-cache "$ACTION_REPO_DIR"
         elif [ "$SOURCE" = "local" ]; then
           echo "[setup-cas] Installing cas from local workspace..."
-          uv tool install --force .
+          uv tool install --force --reinstall --no-cache .
         elif [ "$SOURCE" = "wheel" ]; then
           if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
             LATEST_WHEEL="$(curl -fsSL https://raw.githubusercontent.com/ideas-to-life/setup-cas/main/LATEST_WHEEL 2>/dev/null || echo "")"
-            WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.2.0-py3-none-any.whl}"
+            WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.2.1-py3-none-any.whl}"
             WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/latest/download/${WHEEL_NAME}"
           else
             CLEAN_VER="${VERSION#v}"
             WHEEL_URL="https://github.com/ideas-to-life/setup-cas/releases/download/${VERSION}/cas_runner-${CLEAN_VER}-py3-none-any.whl"
           fi
           echo "[setup-cas] Installing cas from public release wheel ($WHEEL_URL)..."
-          if ! uv tool install --force "$WHEEL_URL"; then
+          if ! uv tool install --force --reinstall --no-cache "$WHEEL_URL"; then
             echo "[setup-cas][WARN] Public wheel install failed; falling back to git source..."
-            uv tool install --force "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
+            uv tool install --force --reinstall --no-cache "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
           fi
         else
           echo "[setup-cas] Installing cas from git (ref: ${VERSION})..."
-          uv tool install --force "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
+          uv tool install --force --reinstall --no-cache "git+https://github.com/ideas-to-life/ideas-to-life-cas.git@${VERSION}"
         fi
 
         UV_TOOL_BIN_DIR="$(uv tool dir --bin 2>/dev/null || echo "$HOME/.local/bin")"

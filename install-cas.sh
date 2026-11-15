@@ -79,7 +79,7 @@ echo "[CAS][INFO] Installing/upgrading CAS CLI via uv tool install..."
 if [ -z "$WHEEL_URL" ]; then
   if [ -z "$VERSION" ] || [ "$VERSION" = "main" ] || [ "$VERSION" = "latest" ]; then
     LATEST_WHEEL="$(curl -fsSL "https://raw.githubusercontent.com/${DIST_REPO}/main/LATEST_WHEEL" 2>/dev/null || echo "")"
-    WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.2.0-py3-none-any.whl}"
+    WHEEL_NAME="${LATEST_WHEEL:-cas_runner-0.2.1-py3-none-any.whl}"
     WHEEL_URL="https://github.com/${DIST_REPO}/releases/latest/download/${WHEEL_NAME}"
   else
     CLEAN_VER="${VERSION#v}"
@@ -87,13 +87,13 @@ if [ -z "$WHEEL_URL" ]; then
   fi
 fi
 
-if ! uv tool install --force "$WHEEL_URL"; then
+if ! uv tool install --force --reinstall --no-cache "$WHEEL_URL"; then
   echo "[CAS][WARN] Direct wheel installation failed ($WHEEL_URL); attempting git source fallback..."
   INSTALL_SPEC="git+${REPO_URL}"
   if [ -n "$VERSION" ] && [ "$VERSION" != "main" ]; then
     INSTALL_SPEC="${INSTALL_SPEC}@${VERSION}"
   fi
-  uv tool install --force "$INSTALL_SPEC"
+  uv tool install --force --reinstall --no-cache "$INSTALL_SPEC"
 fi
 
 # 4. PATH Verification & Guidance
